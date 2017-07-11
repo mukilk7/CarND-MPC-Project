@@ -93,13 +93,66 @@ int main() {
           double v = j[1]["speed"];
 
           /*
-          * TODO: Calculate steering angle and throttle using MPC.
+          * Final GOAL: Calculate steering angle and throttle using MPC.
           *
           * Both are in between [-1, 1].
           *
           */
           double steer_value;
           double throttle_value;
+
+          /*
+           * TODO: Calculate what car's state from simulator, i.e.,
+           * px, py, psi, v, will be in future to account for latency
+           * in actuation. Use kinematic equations with time-step set
+           * to latency of 100ms as per rubric i.e., latency_in_s = 0.1.
+           */
+
+          /*
+           * TODO: Transform car x,y to be the origin (0,0). Then rotate all
+           * waypoints of "ideal" path given by simulator relative to this
+           * new origin. This has the effect of making psi, the car's
+           * orientation w.r.t lane center, zero. Simulator returns waypoints
+           * in "map" coordinates.
+           */
+
+          /*
+           * TODO: Fit a 3rd degree polynomial to the transformed waypoints.
+           */
+
+          /*
+           * TODO: Compute Cross-Track-Error (CTE) as the y-distance between
+           * car's current position at 0,0 and the fitted curve. This can be
+           * done by calling polyeval at x=0. Then compute Error in Orientation
+           * (EPSI) as arctan of derivative of ideal path polynomial evaluated
+           * at x=0 i.e., if poly is c0 + c1 * x + c2 * x^2 + c3 * x^3 then,
+           * d/dx(poly) = c1 + 2 * c2 * x + 3 * c3 * x^2 which at x=0 due to
+           * our earlier transformation means:
+           * => epsi = psi - atan(c1) or epsi = -atan(c1), given that we also
+           * transformed psi = 0.
+           */
+
+          /*
+           * TODO: Build state and use MPC solve to get the new state vector
+           * that optimizes for all of our criteria using the IPOPT solver.
+           */
+
+          /*
+           * TODO: Setup Next_x, Next_y values using data from the ideal path
+           * polynomial fit - this line gets printed in yellow in the simulator.
+           */
+
+          /*
+           * TODO: Setup mpc_x_vals, mpc_y_vals values using vars from mpc solve
+           * - this stuff gets printed in yellow in the simulator. Pay attention
+           * to how vars is setup the x,y values alternate i.e. odd -> x,
+           * even -> y. This line gets printed in green in the simulator.
+           */
+
+          /*
+           * TODO: Finally, send the throttle, steering, new_*, mpc_* over to the
+           * simulator.
+           */
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
