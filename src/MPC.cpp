@@ -6,7 +6,7 @@
 using CppAD::AD;
 
 //Predict about a second into the future
-size_t N = 10;
+int N = 10;
 double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
@@ -26,6 +26,12 @@ const int NACTUATORS = 2;
 
 //The number of waypoints returned by simulator for ideal path
 const int NWAYPOINTS = 6;
+
+const double ref_cte = 0.0;
+const double ref_epsi = 0.0;
+//NOTE: Using a low ref_v to account for slow
+//frame-rate simulation environment I have.
+const double ref_v = 3.0;
 
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
@@ -59,13 +65,13 @@ class FG_eval {
     fg[0] = 0;
 
     // Reference State Cost
-    // TODO: Define the cost related the reference state and
+    // Define the cost related the reference state and
     // any anything you think may be beneficial.
     AD<double> cost = 0;
     //minimize errors
     for (int i = 0; i < N; i++) {
-      cost += (kCte * CppAD::pow(vars[cte_start + i], 2));
-      cost += (kEpsi * CppAD::pow(vars[epsi_start + i], 2));
+      cost += (kCte * CppAD::pow(vars[cte_start + i] - ref_cte, 2));
+      cost += (kEpsi * CppAD::pow(vars[epsi_start + i] - ref_epsi, 2));
       cost += (kV * CppAD::pow(vars[v_start + i] - ref_v, 2));
     }
     //minimize control inputs (actuators)
@@ -121,7 +127,6 @@ class FG_eval {
       fg[1 + epsi_start + t] = epsi1 - (epsi_des + ((v0 / Lf) * delta0 * dt));
     }
   }
-  }
 };
 
 //
@@ -132,7 +137,6 @@ MPC::~MPC() {}
 
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   bool ok = true;
-  size_t i;
   typedef CPPAD_TESTVECTOR(double) Dvector;
 
   // Set the number of model variables (includes both states and inputs).
@@ -141,16 +145,16 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   //
   // 4 * 10 + 2 * 9
   // Note that for N timesteps, there will only be N-1 actuations.
-  size_t n_vars = state.size() * N + (N-1) * NACTUATORS;
+  int n_vars = state.size() * N + (N-1) * NACTUATORS;
   // Set the number of constraints
-  size_t n_constraints = NWAYPOINTS * N;
+  int n_constraints = NWAYPOINTS * N;
 
-  double x = x0[0];
-  double y = x0[1];
-  double psi = x0[2];
-  double v = x0[3];
-  double cte = x0[4];
-  double epsi = x0[5];
+  double x = state[0];
+  double y = state[1];
+  double psi = state[2];
+  double v = state[3];
+  double cte = state[4];
+  double epsi = state[5];
 
   // Initial value of the independent variables.
   // SHOULD BE 0 besides initial state.
@@ -169,7 +173,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   Dvector vars_upperbound(n_vars);
   // Set all non-actuators upper and lowerlimits
   // to the max negative and positive values.
-  for (int i = 0; i < delta_start; i++) {
+  for (size_t i = 0; i < delta_start; i++) {
     vars_lowerbound[i] = -1.0e19;
     vars_upperbound[i] = 1.0e19;
   }
@@ -177,7 +181,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // The upper and lower limits of delta are set to -25 and 25
   // degrees (values in radians).
   // NOTE: Feel free to change this to something else.
-  for (int i = delta_start; i < a_start; i++) {
+  for (size_t i = delta_start; i < a_start; i++) {
     vars_lowerbound[i] = -0.436332 * Lf;
     vars_upperbound[i] = 0.436332 * Lf;
   }

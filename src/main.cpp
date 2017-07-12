@@ -96,15 +96,6 @@ int main() {
           double acceleration = j[1]["throttle"];
 
           /*
-          * Final GOAL: Calculate steering angle and throttle using MPC.
-          *
-          * Both are in between [-1, 1].
-          *
-          */
-          double steer_value;
-          double throttle_value;
-
-          /*
            * Calculate what car's state from simulator, i.e.,
            * px, py, psi, v, will be in future to account for latency
            * in actuation. Use kinematic equations with time-step set
@@ -112,20 +103,21 @@ int main() {
            *
            * Ref: https://discussions.udacity.com/t/how-to-incorporate-latency-into-the-model/257391/4
            */
-          double latency_s = 0.1;
+          const double latency_s = 0.1;
+          const double Lf = 2.67;
           px = px + v * cos(psi) * latency_s;
           py = py + v * sin(psi) * latency_s;
           psi = psi + ((v / Lf) * delta * latency_s);
           v = v + acceleration * latency_s;
 
           /*
-           * TODO: Transform car x,y to be the origin (0,0). Then rotate all
+           * Transform car x,y to be the origin (0,0). Then rotate all
            * waypoints of "ideal" path given by simulator relative to this
            * new origin. This has the effect of making psi, the car's
            * orientation w.r.t lane center, zero. Simulator returns waypoints
            * in "map" coordinates.
            */
-          for (int i = 0; i < ptsx.size(); i++) {
+          for (size_t i = 0; i < ptsx.size(); i++) {
             double shiftx = ptsx[i] - px;
             double shifty = ptsy[i] - py;
             ptsx[i] = shiftx * cos(-psi) - shifty * sin(-psi);
@@ -133,12 +125,14 @@ int main() {
           }
 
           /*
-           * TODO: Fit a 3rd degree polynomial to the transformed waypoints.
+           * Fit a 3rd degree polynomial to the transformed waypoints.
            */
-
+          Eigen::Map<Eigen::VectorXd> ptsxtransformed(&ptsx[0], ptsx.size());
+          Eigen::Map<Eigen::VectorXd> ptsytransformed(&ptsy[0], ptsy.size());
+          Eigen::VectorXd coeffs = polyfit(ptsxtransformed, ptsytransformed, 3);
 
           /*
-           * TODO: Compute Cross-Track-Error (CTE) as the y-distance between
+           * Compute approximate CTE as the y-distance between
            * car's current position at 0,0 and the fitted curve. This can be
            * done by calling polyeval at x=0. Then compute Error in Orientation
            * (EPSI) as arctan of derivative of ideal path polynomial evaluated
@@ -148,55 +142,65 @@ int main() {
            * => epsi = psi - atan(c1) or epsi = -atan(c1), given that we also
            * transformed psi = 0.
            */
+          double cte = polyeval(coeffs, 0.0);
+          double epsi = -atan(coeffs[1]);
 
           /*
-           * TODO: Build state and use MPC solve to get the new state vector
+           * Build state and use MPC solve to get the new state vector
            * that optimizes for all of our criteria using the IPOPT solver.
            */
+          Eigen::VectorXd state(ptsx.size());
+          state << 0, 0, 0, v, cte, epsi;
+          vector<double> vars = mpc.Solve(state, coeffs);
 
           /*
-           * TODO: Setup Next_x, Next_y values using data from the ideal path
+           * Setup idealx, idealy values using data from the ideal path
            * polynomial fit - this line gets printed in yellow in the simulator.
            */
+          vector<double> idealx, idealy;
+          double ptspace = 2.0;
+          double numpts = 20;
+          for (int i = 0; i < numpts; i++) {
+            idealx.push_back(i * ptspace);
+            idealy.push_back(polyeval(coeffs, i * ptspace));
+          }
 
           /*
-           * TODO: Setup mpc_x_vals, mpc_y_vals values using vars from mpc solve
+           * Setup mpc_x_vals, mpc_y_vals values using vars from mpc solve
            * - this stuff gets printed in yellow in the simulator. Pay attention
            * to how vars is setup the x,y values alternate i.e. odd -> x,
            * even -> y. This line gets printed in green in the simulator.
            */
+          vector<double> mpcx, mpcy;
+          for (size_t i = 2; i < vars.size(); i++) {
+            if (i % 2 == 0)
+              mpcx.push_back(vars[i]);
+            else
+              mpcy.push_back(vars[i]);
+          }
 
           /*
-           * TODO: Finally, send the throttle, steering, new_*, mpc_* over to the
+           * Finally, send the throttle, steering, new_*, mpc_* over to the
            * simulator.
            */
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
+          double steer_value = vars[0] / (deg2rad(25) * Lf);
+          double throttle_value = vars[1];
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
 
-          //Display the MPC predicted trajectory 
-          vector<double> mpc_x_vals;
-          vector<double> mpc_y_vals;
-
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
-
-          msgJson["mpc_x"] = mpc_x_vals;
-          msgJson["mpc_y"] = mpc_y_vals;
-
-          //Display the waypoints/reference line
-          vector<double> next_x_vals;
-          vector<double> next_y_vals;
+          msgJson["mpc_x"] = mpcx;
+          msgJson["mpc_y"] = mpcy;
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
-
-          msgJson["next_x"] = next_x_vals;
-          msgJson["next_y"] = next_y_vals;
-
+          msgJson["next_x"] = idealx;
+          msgJson["next_y"] = idealy;
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           std::cout << msg << std::endl;
