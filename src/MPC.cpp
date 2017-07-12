@@ -178,8 +178,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // degrees (values in radians).
   // NOTE: Feel free to change this to something else.
   for (int i = delta_start; i < a_start; i++) {
-    vars_lowerbound[i] = -0.436332;
-    vars_upperbound[i] = 0.436332;
+    vars_lowerbound[i] = -0.436332 * Lf;
+    vars_upperbound[i] = 0.436332 * Lf;
   }
 
   // Acceleration/decceleration upper and lower limits.
@@ -247,11 +247,15 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   auto cost = solution.obj_value;
   std::cout << "Cost " << cost << std::endl;
 
-  // TODO: Return the first actuator values. The variables can be accessed with
-  // `solution.x[i]`. Need to return a whole bunch of other stuff too and look
-  // into see if you need to return for all N points.
-  //
-  // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
-  // creates a 2 element double vector.
-  return {solution.x[delta_start], solution.x[a_start]};
+  // Return the first actuator values. The variables can be accessed with
+  // `solution.x[i]`. I'm returning the steering and throttle outputs along
+  // with computed waypoints x and y coordinate values.
+  vector<double> results;
+  results.push_back(solution.x[delta_start]);
+  results.push_back(solution.x[a_start]);
+  for (int i = 0; i < N-1; i++) {
+    results.push_back(solution.x[x_start + i]);
+    results.push_back(solution.x[y_start + i]);
+  }
+  return results;
 }
