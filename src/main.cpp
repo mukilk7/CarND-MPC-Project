@@ -153,7 +153,7 @@ int main() {
            */
           Eigen::VectorXd state(ptsx.size());
           state << 0, 0, 0, v, cte, epsi;
-          vector<double> vars = mpc.Solve(state, coeffs);
+          auto vars = mpc.Solve(state, coeffs);
 
           /*
            * Setup idealx, idealy values using data from the ideal path
@@ -189,7 +189,7 @@ int main() {
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          double steer_value = vars[0] / (deg2rad(25) * Lf);
+          double steer_value = vars[0] / deg2rad(25);
           double throttle_value = vars[1];
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
