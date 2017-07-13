@@ -105,10 +105,12 @@ int main() {
            */
           const double latency_s = 0.1;
           const double Lf = 2.67;
+          /*
           px = px + v * cos(psi) * latency_s;
           py = py + v * sin(psi) * latency_s;
           psi = psi + ((v / Lf) * delta * latency_s);
           v = v + acceleration * latency_s;
+          */
 
           /*
            * Transform car x,y to be the origin (0,0). Then rotate all
@@ -203,7 +205,7 @@ int main() {
           msgJson["next_y"] = idealy;
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          std::cout << msg << ", cte = " << cte << ", epsi = " << epsi << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
@@ -213,7 +215,7 @@ int main() {
           //
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
-          this_thread::sleep_for(chrono::milliseconds(100));
+          //this_thread::sleep_for(chrono::milliseconds(100));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {

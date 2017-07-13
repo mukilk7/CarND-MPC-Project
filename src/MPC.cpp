@@ -31,7 +31,7 @@ const double ref_cte = 0.0;
 const double ref_epsi = 0.0;
 //NOTE: Using a low ref_v to account for slow
 //frame-rate simulation environment I have.
-const double ref_v = 3.0;
+const double ref_v = 30.0;
 
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
@@ -56,9 +56,9 @@ class FG_eval {
     // MPC Implementation
     // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
 
-    double kCte = 1.0, kEpsi = 1.0, kV = 1.0;
-    double kDelta = 1.0, kA = 1.0;
-    double kDeltaDiff = 1.0, kADiff = 1.0;
+    double kCte = 2000.0, kEpsi = 2000.0, kV = 1.0;
+    double kDelta = 5.0, kA = 5.0;
+    double kDeltaDiff = 200.0, kADiff = 10.0;
 
     // --- PART I - Cost Setup ---
 
@@ -121,10 +121,10 @@ class FG_eval {
       fg[1 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
       fg[1 + psi_start + t] = psi1 - (psi0 + ((v0 / Lf) * delta0 * dt));
       fg[1 + v_start + t] = v1 - (v0 + a0 * dt);
-      AD<double> cte_des = coeffs[0] + coeffs[1] * x0;
-      fg[1 + cte_start + t] = cte1 - (cte_des + v0 * CppAD::sin(epsi0) * dt);
-      AD<double> epsi_des = CppAD::atan(coeffs[1]);
-      fg[1 + epsi_start + t] = epsi1 - (epsi_des + ((v0 / Lf) * delta0 * dt));
+      AD<double> cte_des = coeffs[0] + coeffs[1] * x0 + coeffs[2] * x0 * x0 + coeffs[3] * x0 * x0 * x0;
+      fg[1 + cte_start + t] = cte1 - ((cte_des - y0) + v0 * CppAD::sin(epsi0) * dt);
+      AD<double> epsi_des = CppAD::atan(coeffs[1] + 2 * x0 * coeffs[2] + 3 * x0 * x0 * coeffs[3]);
+      fg[1 + epsi_start + t] = epsi1 - ((psi0 - epsi_des) + ((v0 / Lf) * delta0 * dt));
     }
   }
 };
@@ -182,8 +182,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // degrees (values in radians).
   // NOTE: Feel free to change this to something else.
   for (size_t i = delta_start; i < a_start; i++) {
-    vars_lowerbound[i] = -0.436332 * Lf;
-    vars_upperbound[i] = 0.436332 * Lf;
+    vars_lowerbound[i] = -0.436332;
+    vars_upperbound[i] = 0.436332;
   }
 
   // Acceleration/decceleration upper and lower limits.
@@ -257,7 +257,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   vector<double> results;
   results.push_back(solution.x[delta_start]);
   results.push_back(solution.x[a_start]);
-  for (int i = 0; i < N-1; i++) {
+  for (int i = 1; i < N-1; i++) {
     results.push_back(solution.x[x_start + i]);
     results.push_back(solution.x[y_start + i]);
   }
