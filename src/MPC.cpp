@@ -5,7 +5,8 @@
 
 using CppAD::AD;
 
-//Predict about a second into the future
+//Predict about half a second into the future
+//This gives a good amount of lookahead and keeps processing costs low
 int N = 10;
 double dt = 0.1;
 
@@ -31,7 +32,7 @@ const double ref_cte = 0.0;
 const double ref_epsi = 0.0;
 //NOTE: Using a low ref_v to account for slow
 //frame-rate simulation environment I have.
-const double ref_v = 70.0;
+const double ref_v = 30.0 * 0.4407;
 
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
@@ -57,8 +58,9 @@ class FG_eval {
     // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
 
     double kCte = 2000.0, kEpsi = 2000.0, kV = 1.0;
-    double kDelta = 200.0, kA = 5.0;
-    double kDeltaDiff = 200.0, kADiff = 10.0;
+    double kDelta = 200.0, kA = 100.0;
+    double kDeltaDiff = 200.0, kADiff = 200.0;
+    double kDeltaA = 1000.0;
 
     // --- PART I - Cost Setup ---
 
@@ -78,6 +80,7 @@ class FG_eval {
     for (int i = 0; i < N - 1; i++) {
       cost += (kDelta * CppAD::pow(vars[delta_start + i], 2));
       cost += (kA * CppAD::pow(vars[a_start + i], 2));
+      cost += (kDeltaA * CppAD::pow(vars[delta_start + i] * vars[a_start + i], 2));
     }
     //minimize sudden changes
     for (int i = 0; i < N - 2; i++) {
@@ -256,8 +259,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // `solution.x[i]`. I'm returning the steering and throttle outputs along
   // with computed waypoints x and y coordinate values.
   vector<double> results;
-  results.push_back(solution.x[delta_start]);
-  results.push_back(solution.x[a_start]);
+  results.push_back(solution.x[delta_start + 2]);
+  results.push_back(solution.x[a_start + 2]);
   for (int i = 1; i < N-1; i++) {
     results.push_back(solution.x[x_start + i]);
     results.push_back(solution.x[y_start + i]);

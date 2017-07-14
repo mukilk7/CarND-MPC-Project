@@ -92,25 +92,8 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
-          double delta = j[1]["steering_angle"];
-          double acceleration = j[1]["throttle"];
-
-          /*
-           * Calculate what car's state from simulator, i.e.,
-           * px, py, psi, v, will be in future to account for latency
-           * in actuation. Use kinematic equations with time-step set
-           * to latency of 100ms as per rubric i.e., latency_in_s = 0.1.
-           *
-           * Ref: https://discussions.udacity.com/t/how-to-incorporate-latency-into-the-model/257391/4
-           */
-          const double latency_s = 0.1;
-          const double Lf = 2.67;
-          /*
-          px = px + v * cos(psi) * latency_s;
-          py = py + v * sin(psi) * latency_s;
-          psi = psi + ((v / Lf) * delta * latency_s);
-          v = v + acceleration * latency_s;
-          */
+          //mph to m/s
+          v *= 0.4407;
 
           /*
            * Transform car x,y to be the origin (0,0). Then rotate all
@@ -161,7 +144,7 @@ int main() {
            */
           vector<double> idealx, idealy;
           double ptspace = 2.0;
-          double numpts = 20;
+          double numpts = 10;
           for (int i = 0; i < numpts; i++) {
             idealx.push_back(i * ptspace);
             idealy.push_back(polyeval(coeffs, i * ptspace));
@@ -215,7 +198,7 @@ int main() {
           //
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
-          //this_thread::sleep_for(chrono::milliseconds(100));
+          this_thread::sleep_for(chrono::milliseconds(100));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {
