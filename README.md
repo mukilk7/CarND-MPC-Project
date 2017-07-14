@@ -74,4 +74,5 @@ I basically dealt with the latency of 100 milliseconds by doing the following th
 
 * While returning the delta (steer) and the acceleration (throttle) values from  the MPC::solve() function, instead of returning the instantaneous current values, I return the value at 0 + x where x is ceil(latency/dt) which in my case was 1. So essentially, I return what the model thinks the actuation should be 1dt or 100ms into the future as per my parameters.
 * To deal with any issues due to this approximation into the future, I also added an extra component to the cost function where I penalize simultaneous high values for steering and throttle - high speed and high steering input is bad. This intuitively makes sense. The cost component that captures that is: (steer * throttle)^2. This proved especially useful for negotiating tricky turns.
+* I also tuned the weights for the different cost components such that I penalize high steering inputs in general more than other factors. This also gives a much smoother driving behavior. I also penalize high CTE and orientation errors heavily.
 
