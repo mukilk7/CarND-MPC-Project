@@ -76,3 +76,6 @@ I basically dealt with the latency of 100 milliseconds by doing the following th
 * To deal with any issues due to this approximation into the future, I also added an extra component to the cost function where I penalize simultaneous high values for steering and throttle - high speed and high steering input is bad. This intuitively makes sense. The cost component that captures that is: (steer * throttle)^2. This proved especially useful for negotiating tricky turns.
 * I also tuned the weights for the different cost components such that I penalize high steering inputs in general more than other factors. This also gives a much smoother driving behavior. I also penalize high CTE and orientation errors heavily.
 
+## Link to Final Video
+
+[![Final Video](https://img.youtube.com/vi/GUrJXReSEzg/0.jpg)](https://streamable.com/3wl8v?loop=0)
