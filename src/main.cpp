@@ -189,7 +189,7 @@ int main() {
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          double steer_value = vars[0] / deg2rad(25);
+          double steer_value = -vars[0] / deg2rad(25);
           double throttle_value = vars[1];
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
@@ -205,7 +205,7 @@ int main() {
           msgJson["next_y"] = idealy;
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << ", cte = " << cte << ", epsi = " << epsi << std::endl;
+          std::cout << msg << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
