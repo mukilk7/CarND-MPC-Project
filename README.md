@@ -65,7 +65,7 @@ The key idea behind the choice of N and dt is to figure out the right tradeoff b
 I did the following pre-processing steps before invoking MPC:
 
 * Convert velocity from MPH to M/S for the sake of the equations
-* Transform car's x,y to be the origin (0,0). Then rotate all waypoints of "ideal" path given by simulator (in map coordinates) relative to this new origin. This has the effect of making psi, the car's orientation w.r.t lane center, zero. It also makes computing cross track error and orientation error very simple. The approximate CTE becomes the y-distance between the origin (or car's position) and the ideal path, and the approximate orientation error becomes the negative arctan of the first polynomial coefficient when the derivative of the polynomial is evaluated at x=0.
+* Transform car's x,y to be the origin (0,0). Then rotate all waypoints of "ideal" path given by simulator (in map coordinates) relative to this new origin. This has the effect of making psi, the car's orientation w.r.t lane center, zero. It also makes computing cross track error and orientation error very simple. The approximate CTE becomes the y-distance between the origin (or car's position) and the ideal path, and the approximate orientation error becomes the negative arctan of the first polynomial coefficient when the derivative of the polynomial representing the ideal path is evaluated at x=0.
 * Also, the angles returned from the simulator were reversed while using in kinematic equations to account for differences in the simulator's directional interpretation and that of the car's.
 
 ### The student implements Model Predictive Control that handles a 100 millisecond latency. Student provides details on how they deal with latency.
